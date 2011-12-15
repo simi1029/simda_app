@@ -21,7 +21,7 @@ describe UsersController do
 
         30.times do
           Factory(:user, :name => Factory.next(:name),
-                                   :email => Factory.next(:email))
+                         :email => Factory.next(:email))
         end
       end
 
@@ -32,23 +32,23 @@ describe UsersController do
 
       it "should have the right title" do
         get :index
-        response.should have_selector("title", :content => "All users")
+        response.should have_selector('title', :content => "All users")
       end
 
       it "should have an element for each user" do
         get :index
         User.paginate(:page => 1).each do |user|
-          response.should have_selector("li", :content => user.name)
+          response.should have_selector('li', :content => user.name)
         end
       end
 
       it "should paginate users" do
         get :index
-        response.should have_selector("div.pagination")
-        response.should have_selector("span.disabled", :content => "Previous")
-        response.should have_selector("a", :href => "/users?page=2",
+        response.should have_selector('div.pagination')
+        response.should have_selector('span.disabled', :content => "Previous")
+        response.should have_selector('a', :href => "/users?page=2",
                                            :content => "2")
-        response.should have_selector("a", :href => "/users?page=2",
+        response.should have_selector('a', :href => "/users?page=2",
                                            :content => "Next")
       end
 
@@ -70,42 +70,42 @@ describe UsersController do
   end
 
   describe "GET 'show'" do
-    
+
     before(:each) do
       @user = Factory(:user)
     end
-  
+
     it "should be successful" do
       get :show, :id => @user
       response.should be_success
     end
-    
+
     it "should find the right user" do
       get :show, :id => @user
       assigns(:user).should == @user
     end
-    
+
     it "should have the right title" do
       get :show, :id => @user
       response.should have_selector('title', :content => @user.name)
     end
-    
+
     it "should have the user's name" do
       get :show, :id => @user
       response.should have_selector('h1', :content => @user.name)
     end
-    
+
     it "should have a profile image" do
       get :show, :id => @user
       response.should have_selector('h1>img', :class => "gravatar")
     end
-    
+
     it "should have the right URL" do
       get :show, :id => @user
       response.should have_selector('td>a', :content => user_path(@user),
                                             :href    => user_path(@user))
     end
-    
+
     it "should show the user's microposts" do
       mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
       mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
@@ -113,20 +113,20 @@ describe UsersController do
       response.should have_selector('span.content', :content => mp1.content)
       response.should have_selector('span.content', :content => mp2.content)
     end
-    
+
     it "should paginate microposts" do
       35.times { Factory(:micropost, :user => @user, :content => "foo") }
       get :show, :id => @user
       response.should have_selector('div.pagination')
     end
-    
+
     it "should display the micropost count" do
       10.times { Factory(:micropost, :user => @user, :content => "foo") }
       get :show, :id => @user
       response.should have_selector('td.sidebar',
                                     :content => @user.microposts.count.to_s)
     end
-    
+
     describe "when signed in as another user" do
       it "should be successful" do
         test_sign_in(Factory(:user, :email => Factory.next(:email)))
@@ -160,18 +160,19 @@ describe UsersController do
 
       it "should have the right title" do
         post :create, :user => @attr
-        response.should have_selector("title", :content => "Sign up")
+        response.should have_selector('title', :content => "Sign up")
       end
 
       it "should render the 'new' page" do
         post :create, :user => @attr
         response.should render_template('new')
       end
+
       it "should not create a user" do
         lambda do
           post :create, :user => @attr
         end.should_not change(User, :count)
-      end   
+      end
     end
 
     describe "success" do
@@ -194,17 +195,14 @@ describe UsersController do
 
       it "should have a welcome message" do
         post :create, :user => @attr
-        flash[:success].should =~ /welcome to the simda app/i
+        flash[:success].should =~ /welcome to the sample app/i
       end
 
       it "should sign the user in" do
         post :create, :user => @attr
         controller.should be_signed_in
       end
-
     end
-
-    
   end
 
   describe "GET 'edit'" do
@@ -221,13 +219,12 @@ describe UsersController do
 
     it "should have the right title" do
       get :edit, :id => @user
-      response.should have_selector("title", :content => "Edit user")
+      response.should have_selector('title', :content => "Edit user")
     end
 
     it "should have a link to change the Gravatar" do
       get :edit, :id => @user
-      gravatar_url = "http://gravatar.com/emails"
-      response.should have_selector("a", :href => gravatar_url,
+      response.should have_selector('a', :href => 'http://gravatar.com/emails',
                                          :content => "change")
     end
   end
@@ -238,10 +235,11 @@ describe UsersController do
       @user = Factory(:user)
       test_sign_in(@user)
     end
+
     describe "failure" do
 
       before(:each) do
-        @attr = { :email => "", :name => "", :password => "",
+        @attr = { :name => "", :email => "", :password => "",
                   :password_confirmation => "" }
       end
 
@@ -252,7 +250,7 @@ describe UsersController do
 
       it "should have the right title" do
         put :update, :id => @user, :user => @attr
-        response.should have_selector("title", :content => "Edit user")
+        response.should have_selector('title', :content => "Edit user")
       end
     end
 
@@ -356,7 +354,7 @@ describe UsersController do
         flash[:success].should =~ /destroyed/i
         response.should redirect_to(users_path)
       end
-      
+
       it "should not be able to destroy itself" do
         lambda do
           delete :destroy, :id => @admin
@@ -365,4 +363,40 @@ describe UsersController do
     end
   end
 
+  describe "follow pages" do
+
+    describe "when not signed in" do
+
+      it "should protect 'following'" do
+        get :following, :id => 1
+        response.should redirect_to(signin_path)
+      end
+
+      it "should protect 'followers'" do
+        get :followers, :id => 1
+        response.should redirect_to(signin_path)
+      end
+    end
+
+    describe "when signed in" do
+
+      before(:each) do
+        @user = test_sign_in(Factory(:user))
+        @other_user = Factory(:user, :email => Factory.next(:email))
+        @user.follow!(@other_user)
+      end
+
+      it "should show user following" do
+        get :following, :id => @user
+        response.should have_selector('a', :href => user_path(@other_user),
+                                           :content => @other_user.name)
+      end
+
+      it "should show user followers" do
+        get :followers, :id => @other_user
+        response.should have_selector('a', :href => user_path(@user),
+                                           :content => @user.name)
+      end
+    end
+  end
 end
