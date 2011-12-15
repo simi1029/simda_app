@@ -9,20 +9,18 @@ describe UsersController do
       it "should deny access" do
         get :index
         response.should redirect_to(signin_path)
-        flash[:notice].should =~ /sign in/i
       end
     end
 
-    describe "for signed-in users" do
+    describe "for signed-in-users" do
 
       before(:each) do
         @user = test_sign_in(Factory(:user))
         second = Factory(:user, :name => "Bob", :email => "another@example.com")
         third  = Factory(:user, :name => "Ben", :email => "another@example.net")
 
-        @users = [@user, second, third]
         30.times do
-          @users << Factory(:user, :name => Factory.next(:name),
+          Factory(:user, :name => Factory.next(:name),
                                    :email => Factory.next(:email))
         end
       end
@@ -39,7 +37,7 @@ describe UsersController do
 
       it "should have an element for each user" do
         get :index
-        @users[0..2].each do |user|
+        User.paginate(:page => 1).each do |user|
           response.should have_selector("li", :content => user.name)
         end
       end
@@ -53,61 +51,129 @@ describe UsersController do
         response.should have_selector("a", :href => "/users?page=2",
                                            :content => "Next")
       end
+
+      it "should have delete links for admins" do
+        @user.toggle!(:admin)
+        other_user = User.all.second
+        get :index
+        response.should have_selector('a', :href => user_path(other_user),
+                                           :content => "delete")
+      end
+
+      it "should not have delete links for non-admins" do
+        other_user = User.all.second
+        get :index
+        response.should_not have_selector('a', :href => user_path(other_user),
+                                               :content => "delete")
+      end
     end
   end
 
-  describe "GET 'new'" do
+  describe "GET 'show'" do
+    
     before(:each) do
       @user = Factory(:user)
     end
-
+  
     it "should be successful" do
-      get :new
+      get :show, :id => @user
       response.should be_success
     end
-
+    
     it "should find the right user" do
       get :show, :id => @user
       assigns(:user).should == @user
     end
     
     it "should have the right title" do
-      get :new
-      response.should have_selector("title", :content => "Sign up")
-    end
-
-    it "should have a name field" do
-      get :new
-      response.should have_selector("input[name='user[name]'][type='text']")
-    end
-
-    it "should have an email field" do
-      get :new
-      response.should have_selector("input[name='user[email]'][type='text']")
-    end
-
-    it "should have a password field" do
-      get :new
-      response.should have_selector("input[name='user[password]'][type='password']")
-    end
-
-    it "should have a password confirmation field" do
-      get :new
-      response.should have_selector("input[name='user[password_confirmation]'][type='password']")
-    end
-
-    it "should include the user's name" do
       get :show, :id => @user
-      response.should have_selector("h1", :content => @user.name)
+      response.should have_selector('title', :content => @user.name)
     end
-
+    
+    it "should have the user's name" do
+      get :show, :id => @user
+      response.should have_selector('h1', :content => @user.name)
+    end
+    
     it "should have a profile image" do
       get :show, :id => @user
-      response.should have_selector("h1>img", :class => "gravatar")
+      response.should have_selector('h1>img', :class => "gravatar")
+    end
+    
+    it "should have the right URL" do
+      get :show, :id => @user
+      response.should have_selector('td>a', :content => user_path(@user),
+                                            :href    => user_path(@user))
+    end
+    
+    it "should show the user's microposts" do
+      mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
+      mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
+      get :show, :id => @user
+      response.should have_selector('span.content', :content => mp1.content)
+      response.should have_selector('span.content', :content => mp2.content)
+    end
+    
+    it "should paginate microposts" do
+      35.times { Factory(:micropost, :user => @user, :content => "foo") }
+      get :show, :id => @user
+      response.should have_selector('div.pagination')
+    end
+    
+    it "should display the micropost count" do
+      10.times { Factory(:micropost, :user => @user, :content => "foo") }
+      get :show, :id => @user
+      response.should have_selector('td.sidebar',
+                                    :content => @user.microposts.count.to_s)
+    end
+    
+    describe "when signed in as another user" do
+      it "should be successful" do
+        test_sign_in(Factory(:user, :email => Factory.next(:email)))
+        get :show, :id => @user
+        response.should be_success
+      end
+    end
+  end
+
+  describe "GET 'new'" do
+
+    it "should be successful" do
+      get :new
+      response.should be_success
+    end
+
+    it "should have the right title" do
+      get :new
+      response.should have_selector('title', :content => "Sign up")
     end
   end
 
   describe "POST 'create'" do
+
+    describe "failure" do
+
+      before(:each) do
+        @attr = { :name => "", :email => "", :password => "",
+                  :password_confirmation => "" }
+      end
+
+      it "should have the right title" do
+        post :create, :user => @attr
+        response.should have_selector("title", :content => "Sign up")
+      end
+
+      it "should render the 'new' page" do
+        post :create, :user => @attr
+        response.should render_template('new')
+      end
+      it "should not create a user" do
+        lambda do
+          post :create, :user => @attr
+        end.should_not change(User, :count)
+      end   
+    end
+
     describe "success" do
 
       before(:each) do
@@ -138,29 +204,7 @@ describe UsersController do
 
     end
 
-    describe "failure" do
-
-      before(:each) do
-        @attr = { :name => "", :email => "", :password => "",
-                  :password_confirmation => "" }
-      end
-
-      it "should not create a user" do
-        lambda do
-          post :create, :user => @attr
-        end.should_not change(User, :count)
-      end
-
-      it "should have the right title" do
-        post :create, :user => @attr
-        response.should have_selector("title", :content => "Sign up")
-      end
-
-      it "should render the 'new' page" do
-        post :create, :user => @attr
-        response.should render_template('new')
-      end
-    end
+    
   end
 
   describe "GET 'edit'" do
@@ -224,11 +268,7 @@ describe UsersController do
         @user.reload
         @user.name.should  == @attr[:name]
         @user.email.should == @attr[:email]
-      end
-
-      it "should redirect to the user show page" do
-        put :update, :id => @user, :user => @attr
-        response.should redirect_to(user_path(@user))
+        @user.encrypted_password.should == assigns(:user).encrypted_password
       end
 
       it "should have a flash message" do
@@ -238,7 +278,7 @@ describe UsersController do
     end
   end
 
-  describe "authentication of edit/update pages" do
+  describe "authentication of edit/update actions" do
 
     before(:each) do
       @user = Factory(:user)
@@ -249,6 +289,7 @@ describe UsersController do
       it "should deny access to 'edit'" do
         get :edit, :id => @user
         response.should redirect_to(signin_path)
+        flash[:notice].should =~ /sign in/i
       end
 
       it "should deny access to 'update'" do
@@ -289,8 +330,8 @@ describe UsersController do
       end
     end
 
-    describe "as a non-admin user" do
-      it "should protect the page" do
+    describe "as non-admin user" do
+      it "should protect the action" do
         test_sign_in(@user)
         delete :destroy, :id => @user
         response.should redirect_to(root_path)
@@ -300,8 +341,8 @@ describe UsersController do
     describe "as an admin user" do
 
       before(:each) do
-        admin = Factory(:user, :email => "admin@example.com", :admin => true)
-        test_sign_in(admin)
+        @admin = Factory(:user, :email => "admin@example.com", :admin => true)
+        test_sign_in(@admin)
       end
 
       it "should destroy the user" do
@@ -312,7 +353,14 @@ describe UsersController do
 
       it "should redirect to the users page" do
         delete :destroy, :id => @user
+        flash[:success].should =~ /destroyed/i
         response.should redirect_to(users_path)
+      end
+      
+      it "should not be able to destroy itself" do
+        lambda do
+          delete :destroy, :id => @admin
+        end.should_not change(User, :count)
       end
     end
   end
