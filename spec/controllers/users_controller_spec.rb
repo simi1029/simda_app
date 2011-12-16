@@ -75,69 +75,69 @@ describe UsersController do
       @user = Factory(:user)
     end
   
-#    it "should be successful" do
-#      get :show, :id => @user
-#      response.should be_success
-#    end
+    it "should be successful" do
+      get :show, :id => @user
+      response.should be_success
+    end
 
-#    it "should find the right user" do
-#      get :show, :id => @user
-#      assigns(:user).should == @user
-#    end
-    
-#    it "should have the right title" do
-#      get :show, :id => @user
-#      response.should have_selector('title', :content => @user.name)
-#    end
+    it "should find the right user" do
+      get :show, :id => @user
+      assigns(:user).should == @user
+    end
 
-#    it "should have the user's name" do
-#      get :show, :id => @user
-#      response.should have_selector('h1', :content => @user.name)
-#    end
+    it "should have the right title" do
+      get :show, :id => @user
+      response.should have_selector('title', :content => @user.name)
+    end
 
-#    it "should have a profile image" do
-#      get :show, :id => @user
-#      response.should have_selector('h1>img', :class => "gravatar")
-#    end
+    it "should have the user's name" do
+      get :show, :id => @user
+      response.should have_selector('h1', :content => @user.name)
+    end
 
-#    it "should have the right URL" do
-#      get :show, :id => @user
-#      response.should have_selector('td>a', :content => user_path(@user),
-#                                            :href    => user_path(@user))
-#    end
+    it "should have a profile image" do
+      get :show, :id => @user
+      response.should have_selector('h1>img', :class => "gravatar")
+    end
 
-#    it "should show the user's microposts" do
-#      mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
-#      mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
-#      get :show, :id => @user
-#      response.should have_selector('span.content', :content => mp1.content)
-#      response.should have_selector('span.content', :content => mp2.content)
-#    end
+    it "should have the right URL" do
+      get :show, :id => @user
+      response.should have_selector('td>a', :content => user_path(@user),
+                                            :href    => user_path(@user))
+    end
 
-#    it "should paginate microposts" do
-#      35.times { Factory(:micropost, :user => @user, :content => "foo") }
-#      get :show, :id => @user
-#      response.should have_selector('div.pagination')
-#    end
+    it "should show the user's microposts" do
+      mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
+      mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
+      get :show, :id => @user
+      response.should have_selector('span.content', :content => mp1.content)
+      response.should have_selector('span.content', :content => mp2.content)
+    end
 
-#    it "should display the micropost count" do
-#      10.times { Factory(:micropost, :user => @user, :content => "foo") }
-#      get :show, :id => @user
-#      response.should have_selector('td.sidebar',
-#                                    :content => @user.microposts.count.to_s)
-#    end
+    it "should paginate microposts" do
+      35.times { Factory(:micropost, :user => @user, :content => "foo") }
+      get :show, :id => @user
+      response.should have_selector('div.pagination')
+    end
+
+    it "should display the micropost count" do
+      10.times { Factory(:micropost, :user => @user, :content => "foo") }
+      get :show, :id => @user
+      response.should have_selector('td.sidebar',
+                                    :content => @user.microposts.count.to_s)
+    end
 
     describe "when signed in as another user" do
-#      it "should be successful" do
-#        test_sign_in(Factory(:user, :email => Factory.next(:email)))
-#        get :show, :id => @user
-#        response.should be_success
-#      end
+      it "should be successful" do
+        test_sign_in(Factory(:user, :email => Factory.next(:email)))
+        get :show, :id => @user
+        response.should be_success
+      end
     end
   end
 
   describe "GET 'new'" do
-  
+
     it "should be successful" do
       get :new
       response.should be_success
@@ -343,18 +343,18 @@ describe UsersController do
         test_sign_in(@admin)
       end
 
-#      it "should destroy the user" do
-#        lambda do
-#          delete :destroy, :id => @user
-#        end.should change(User, :count).by(-1)
-#      end
+      it "should destroy the user" do
+        lambda do
+          delete :destroy, :id => @user
+        end.should change(User, :count).by(-1)
+      end
 
-#      it "should redirect to the users page" do
-#        delete :destroy, :id => @user
-#        flash[:success].should =~ /destroyed/i
-#        response.should redirect_to(users_path)
-#      end
-      
+      it "should redirect to the users page" do
+        delete :destroy, :id => @user
+        flash[:success].should =~ /destroyed/i
+        response.should redirect_to(users_path)
+      end
+
       it "should not be able to destroy itself" do
         lambda do
           delete :destroy, :id => @admin
@@ -362,7 +362,7 @@ describe UsersController do
       end
     end
   end
-  
+
   describe "follow pages" do
 
     describe "when not signed in" do
@@ -377,26 +377,26 @@ describe UsersController do
 #        response.should redirect_to(signin_path)
 #      end
     end
-    
+
     describe "when signed in" do
-      
+
       before(:each) do
         @user = test_sign_in(Factory(:user))
         @other_user = Factory(:user, :email => Factory.next(:email))
         @user.follow!(@other_user)
       end
-      
-#      it "should show user following" do
-#        get :following, :id => @user
-#        response.should have_selector('a', :href => user_path(@other_user),
-#                                           :content => @other_user.name)
-#      end
 
-#      it "should show user followers" do
-#        get :followers, :id => @other_user
-#        response.should have_selector('a', :href => user_path(@user),
-#                                           :content => @user.name)
-#      end
+      it "should show user following" do
+        get :following, :id => @user
+        response.should have_selector('a', :href => user_path(@other_user),
+                                           :content => @other_user.name)
+      end
+
+      it "should show user followers" do
+        get :followers, :id => @other_user
+        response.should have_selector('a', :href => user_path(@user),
+                                           :content => @user.name)
+      end
     end
   end
 end

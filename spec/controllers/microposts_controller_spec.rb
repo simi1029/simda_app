@@ -27,16 +27,16 @@ describe MicropostsController do
         @attr = { :content => "" }
       end
 
-#      it "should not create a micropost" do
-#        lambda do
-#          post :create, :micropost => @attr
-#        end.should_not change(Micropost, :count)
-#      end
+      it "should not create a micropost" do
+        lambda do
+          post :create, :micropost => @attr
+        end.should_not change(Micropost, :count)
+      end
 
-#      it "should re-render the home page" do
-#        post :create, :micropost => @attr
-#        response.should render_template('pages/home')
-#      end
+      it "should re-render the home page" do
+        post :create, :micropost => @attr
+        response.should render_template('pages/home')
+      end
     end
 
     describe "success" do
